@@ -1,0 +1,45 @@
+apiVersion: automation.cloudbees.io/v1alpha1
+kind: workflow
+name: My workflow
+
+on:
+  push:
+     branches:
+       - '**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: string
+        default: "DEV"
+
+jobs:
+  build:
+    outputs:
+      hello: ${{ steps.hello-1.outputs.hello }}
+    steps:
+      - name: Say hello
+        id: hello-1
+        uses: docker://golang:1.20.3-alpine3.17
+        shell: sh
+        run: |
+          echo "hello world - ${{ vars.vars_1 }}" > $CLOUDBEES_OUTPUTS/hello
+
+  my-edge-job:
+    needs: build
+    with:
+      script: |
+        echo "Hello world! I'm $(whoami) on $(hostname)"
+
+        echo "Job output access: ${{ needs.build.outputs.hello }}"
+
+        echo "\033[0;31m Inputs context \033[0m"
+        echo "${{ toJSON(inputs) }}"
+
+        echo "\033[0;31m Vars context \033[0m"
+        echo "${{ vars.vars_1 }}"
+
+        echo "\033[0;31m CloudBees context \033[0m"
+        echo "${{ toJSON(cloudbees) }}"
+
+      labels: "self-hosted,my-label-1"
+    delegates: cloudbees-io/edge-custom-job/custom-job.yaml
