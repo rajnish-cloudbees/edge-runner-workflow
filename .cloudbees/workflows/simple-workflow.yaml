@@ -12,9 +12,7 @@ jobs:
       - uses: docker://alpine:latest
         with:
           entrypoint: echo
-          args: hello from edge runner container step
+          args: hello from entrypoint
 
       - uses: docker://alpine:latest
-        with:
-          entrypoint: sh
-          args: -c "echo step2 && date"
+        run: echo hello from run command && date
